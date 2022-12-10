@@ -1,0 +1,124 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        gradlePluginPortal()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://repo.spongepowered.org/maven' }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT'
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.3"
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+
+    }
+}
+
+apply plugin: 'java'
+apply plugin: "com.github.johnrengelman.plugin-shadow"
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'org.spongepowered.mixin'
+
+version = "1.0"
+
+group = "org.example"
+archivesBaseName = "ExampleMod"
+String modid = "examplemod"
+
+repositories {
+    maven { url "https://jitpack.io" }
+    maven {
+        name = 'sponge'
+        url = 'https://repo.spongepowered.org/maven/'
+    }
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    implementation 'org.spongepowered:mixin:0.7.11-SNAPSHOT'
+    annotationProcessor "org.spongepowered:mixin:0.7.11-SNAPSHOT"
+}
+
+mixin {
+    add sourceSets.main, "mixins.${modid}.refmap.json"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+sourceCompatibility = targetCompatibility = '1.8'
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+    options.encoding = 'UTF-8'
+}
+
+minecraft {
+    version = "1.8.9-11.15.1.2318-1.8.9"
+    runDir = "run"
+    mappings = "stable_22"
+    makeObfSourceJar = false
+}
+
+jar {
+    exclude("**/launch")
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+    inputs.property 'name', archivesBaseName
+    inputs.property 'modid', modid
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+
+        expand(
+                'version': project.version,
+                'mcversion': project.minecraft.version,
+                'name': archivesBaseName,
+                'modid': modid,
+        )
+
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+
+    rename '(.+_at.cfg)', 'META-INF/$1'
+}
+
+task moveResources {
+    doLast {
+        ant.move file: "${buildDir}/resources/main",
+                todir: "${buildDir}/classes/java"
+    }
+}
+
+tasks.moveResources.dependsOn processResources
+tasks.classes.dependsOn moveResources
+
+jar {
+    manifest.attributes(
+            "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
+            "MixinConfigs": "mixins.${modid}.json",
+            "FMLCorePluginContainsFMLMod": true,
+            "ForceLoadAsMod": true
+    )
+}
+
+reobf {
+    shadowJar {
+        mappingType = 'SEARGE'
+    }
+    jar {
+        useNotchSrg()
+    }
+}
+
+reobfJar.dependsOn tasks.shadowJar

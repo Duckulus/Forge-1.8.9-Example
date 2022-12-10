@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "${modid}",
+    "name": "${name}",
+    "description": "An example mod for Forge 1.8.9",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["Duckulus"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
